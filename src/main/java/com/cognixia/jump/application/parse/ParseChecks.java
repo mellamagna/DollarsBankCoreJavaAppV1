@@ -13,6 +13,7 @@ public class ParseChecks {
 		}
 		if (text.length() == 10) {
 			try {
+				@SuppressWarnings("unused")
 				long l = Long.parseLong(text);
 				return text;
 			} catch (NumberFormatException e) {
@@ -30,6 +31,30 @@ public class ParseChecks {
 			if (match(".*[a-z].*", text) && match(".*[A-Z].*", text) && match(".*[!@#$%^&*()\\-+].*", text)) {
 				return text;
 			}
+		}
+		throw new NumberFormatException();
+	}
+	
+	public static int isCheckingSavings(String text) {
+		if (text == null) {
+			throw new NumberFormatException();
+		}
+		String input = text.toLowerCase();
+		if (input.equals("checking")) {
+			return 1;
+		} else if (input.equals("savings")) {
+			return 2;
+		}
+		throw new NumberFormatException();
+	}
+	
+	public static long parseWithdrawal(String text) {
+		if (text == null) {
+			throw new NumberFormatException();
+		}
+		long input = Long.parseLong(text) * -1;
+		if (input < 0) {
+			return input;
 		}
 		throw new NumberFormatException();
 	}

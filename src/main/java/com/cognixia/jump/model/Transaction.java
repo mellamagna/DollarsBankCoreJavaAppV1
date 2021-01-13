@@ -57,8 +57,37 @@ public class Transaction {
 	}
 	@Override
 	public String toString() {
-		return "Transaction [transactionId=" + transactionId + ", userId=" + userId + ", date=" + date + ", type="
-				+ type + ", source=" + source + ", amount=" + amount + "]";
+		String transType;
+		String transSource;
+		String conjunction = " from ";
+		switch (this.type) {
+		case 1:
+			transType = "deposit";
+			conjunction = " to ";
+			break;
+		case 2:
+			transType = "withdrawal";
+			break;
+		case 3:
+			transType = "transfer";
+			break;
+		default:
+			transType = "deposit";
+			break;
+		}
+		switch (this.source) {
+		case 1:
+			transSource = "checking";
+			break;
+		case 2:
+			transSource = "savings";
+			break;
+		default:
+			transSource = "checking";
+			break;
+		}
+		return "[" + this.date + " " + "ID:" + this.transactionId + "] " + transType
+				+ conjunction + transSource + " ($" + this.amount + ")";
 	}
 	
 	
