@@ -1,7 +1,6 @@
 package com.cognixia.jump.application;
 
 import static org.fusesource.jansi.Ansi.*;
-import static org.fusesource.jansi.Ansi.Color.*;
 
 import java.io.IOException;
 import java.sql.Date;
@@ -11,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Function;
-
-import org.fusesource.jansi.AnsiConsole;
 
 import com.cognixia.jump.application.parse.InputField;
 import com.cognixia.jump.application.parse.ParseChecks;
@@ -36,6 +33,17 @@ import com.cognixia.jump.model.Transaction;
 
 public class DollarsBankApplication {
 	
+	public static final String ANSI_RESET  = "\u001B[0m";
+
+	public static final String ANSI_BLACK  = "\u001B[30m";
+	public static final String ANSI_RED    = "\u001B[31m";
+	public static final String ANSI_GREEN  = "\u001B[32m";
+	public static final String ANSI_YELLOW = "\u001B[33m";
+	public static final String ANSI_BLUE   = "\u001B[34m";
+	public static final String ANSI_PURPLE = "\u001B[35m";
+	public static final String ANSI_CYAN   = "\u001B[36m";
+	public static final String ANSI_WHITE  = "\u001B[37m";
+	
 	private static AccountDAO accountDAO = new AccountDAOImpl();
 	private static CheckingAccountDAO checkingAccountDAO = new CheckingAccountDAOImpl();
 	private static CustomerDAO customerDAO = new CustomerDAOImpl();
@@ -48,7 +56,6 @@ public class DollarsBankApplication {
 		/*********************************************
 		 * RESOURCE INITIALIZATION
 		 *********************************************/
-		AnsiConsole.systemInstall();
 		sc = new Scanner(System.in);
 		String header;
 		LinkedHashMap<InputField, Function<String, Object>> fields = new LinkedHashMap<InputField, Function<String, Object>>();
@@ -278,7 +285,6 @@ public class DollarsBankApplication {
 		/*********************************************
 		 * END MAIN BODY
 		 *********************************************/
-		AnsiConsole.systemUninstall();
 		sc.close();
 	}
 	
@@ -290,7 +296,7 @@ public class DollarsBankApplication {
 		}
 		horiz.append("-+\n");
 		String content = "| " + text + " |\n";
-		result.append(horiz.toString() + content + horiz.toString());
+		result.append(ANSI_BLUE + horiz.toString() + content + horiz.toString() + ANSI_RESET);
 		System.out.println(result);
 	}
 	
@@ -299,7 +305,7 @@ public class DollarsBankApplication {
 	}
 	
 	private static void printError(String text) {
-		System.out.println(text);
+		System.out.println(ANSI_RED + text + ANSI_RESET);
 	}
 	
 	private static void pauseEnter(String text) {
@@ -309,9 +315,9 @@ public class DollarsBankApplication {
 			System.out.println("Press Enter to continue...");
 		}
 		try {
-			System.in.read();
+			sc.nextLine();
 		}
-		catch(IOException e){}
+		catch(Exception e){}
 	}
 	
 	private static void pauseEnter() {
@@ -319,10 +325,11 @@ public class DollarsBankApplication {
 	}
 	
 	private static <T> T presentField(String prompt, Function<String, T> function, long lowerBound, long upperBound) {
-		System.out.println(prompt + " :");
+		System.out.println(prompt + " :" + ANSI_CYAN);
 		while(true) {
 			try {
 				T result = function.apply(sc.nextLine().trim());
+				System.out.print(ANSI_RESET);
 				if (result instanceof Integer || result instanceof Long) {
 					if (((Number) result).longValue() >= lowerBound && ((Number) result).longValue() <= upperBound) {
 						return result;
@@ -343,12 +350,12 @@ public class DollarsBankApplication {
 	}
 	
 	private static int presentMenuPrompt(int fields) {
-		StringBuffer promptText = new StringBuffer("Enter choice (");
+		StringBuffer promptText = new StringBuffer(ANSI_GREEN + "Enter choice (");
 		for (int i = 1; i <= fields; i++) {
 			if (i < fields) {
 				promptText.append(i + ",");
 			} else {
-				promptText.append(" or " + i + ")");
+				promptText.append(" or " + i + ")" + ANSI_RESET);
 			}
 		}
 		return presentField(promptText.toString(), (Integer::parseInt), 1, fields);
