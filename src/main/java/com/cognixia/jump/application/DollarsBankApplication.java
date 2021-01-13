@@ -19,11 +19,17 @@ import com.cognixia.jump.dao.CheckingAccountDAO;
 import com.cognixia.jump.dao.CustomerDAO;
 import com.cognixia.jump.dao.SavingsAccountDAO;
 import com.cognixia.jump.dao.TransactionDAO;
+import com.cognixia.jump.dao.exceptions.NotFoundException;
+import com.cognixia.jump.dao.exceptions.UsernameUnavailableException;
 import com.cognixia.jump.dao.impl.AccountDAOImpl;
 import com.cognixia.jump.dao.impl.CheckingAccountDAOImpl;
 import com.cognixia.jump.dao.impl.CustomerDAOImpl;
 import com.cognixia.jump.dao.impl.SavingsAccountDAOImpl;
 import com.cognixia.jump.dao.impl.TransactionDAOImpl;
+import com.cognixia.jump.model.Account;
+import com.cognixia.jump.model.CheckingAccount;
+import com.cognixia.jump.model.Customer;
+import com.cognixia.jump.model.SavingsAccount;
 
 public class DollarsBankApplication {
 	
@@ -45,43 +51,92 @@ public class DollarsBankApplication {
 		LinkedHashMap<InputField, Function<String, Object>> fields = new LinkedHashMap<InputField, Function<String, Object>>();
 		List<Object> fieldInput;
 		ArrayList<String> menu = new ArrayList<String>();
+		Account currentSession = null;
 		/*********************************************
 		 * BEGIN MAIN BODY
 		 *********************************************/
 		
 		
 		
-		header = "DOLLARSBANK Welcomes You!";
-		menu.clear();
-		menu.add("Create New Account");
-		menu.add("Login");
-		menu.add("Exit");
-		int i = printMenuPage(header, menu);
-		switch (i) {
-		case 1:
-			header = "Enter Details For New Account";
-			fields.clear();
-			fields.put(new InputField("Customer Name"), (str -> str));
-			fields.put(new InputField("Customer Address"), (str -> str));
-			fields.put(new InputField("Customer Contact Number"), (ParseChecks::isPhoneNumber));
-			fields.put(new InputField("User Id"), (str -> str));
-			fields.put(new InputField("Password"), (str -> str));
-			fields.put(new InputField("Initial Deposit Amount", 0, 3000000000l), (Long::parseLong));
-			fieldInput = printFieldPage(header, fields);
-			break;
-		case 2:
-			header = "Enter Login Details";
-			fields.clear();
-			fields.put(new InputField("User Id"), (str -> str));
-			fields.put(new InputField("Password"), (str -> str));
-			fieldInput = printFieldPage(header, fields);
-			break;
-		case 3:
-			return;
-		default:
-			break;
+		boolean sessionEnd = false;
+		while (!sessionEnd) {
+			if (currentSession != null) {
+				header = "WELCOME " + currentSession.getUserId() + "!!!";
+				menu.clear();
+				menu.add("Deposit Amount");
+				menu.add("Withdraw Amount");
+				menu.add("Funds Transfer");
+				menu.add("View 5 Recent Transactions");
+				menu.add("Display Customer Info");
+				menu.add("Sign Out");
+				int i = printMenuPage(header, menu);
+				switch (i) {
+				case 6:
+					currentSession = null;
+					break;
+				default:
+					break;
+				}
+			} else {
+				header = "DOLLARSBANK Welcomes You!";
+				menu.clear();
+				menu.add("Create New Account");
+				menu.add("Login");
+				menu.add("Exit");
+				int i = printMenuPage(header, menu);
+				switch (i) {
+				case 1:
+					header = "Enter Details For New Account";
+					fields.clear();
+					fields.put(new InputField("Customer Name"), (str -> str));
+					fields.put(new InputField("Customer Address"), (str -> str));
+					fields.put(new InputField("Customer Contact Number"), (ParseChecks::isPhoneNumber));
+					fields.put(new InputField("User Id"), (str -> str));
+					fields.put(new InputField("Password (8 characters with lower, upper, & special)"), (ParseChecks::isStrongPassword));
+					fields.put(new InputField("Initial Deposit Amount (Checking)", 0, 3000000000l), (Long::parseLong));
+					fields.put(new InputField("Initial Deposit Amount (Savings)", 0, 3000000000l), (Long::parseLong));
+					fieldInput = printFieldPage(header, fields);
+					Account account = new Account((String)fieldInput.get(3), (String)fieldInput.get(4));
+					Customer customer = new Customer(0, (String)fieldInput.get(3), (String)fieldInput.get(0), (String)fieldInput.get(1), (String)fieldInput.get(2));
+					CheckingAccount ca = new CheckingAccount(0, (String)fieldInput.get(3), (Long)fieldInput.get(5));
+					SavingsAccount sa = new SavingsAccount(0, (String)fieldInput.get(3), (Long)fieldInput.get(6));
+					try {
+						accountDAO.addAccount(account);
+						customerDAO.addCustomer(customer);
+						checkingAccountDAO.addCheckingAccount(ca);
+						savingsAccountDAO.addSavingsAccount(sa);
+						currentSession = account;
+					} catch (UsernameUnavailableException e) {
+						printError("This user ID is already taken. Please try again!");
+					}
+					break;
+				case 2:
+					header = "Enter Login Details";
+					fields.clear();
+					fields.put(new InputField("User Id"), (str -> str));
+					fields.put(new InputField("Password"), (str -> str));
+					fieldInput = printFieldPage(header, fields);
+					try {
+						Account attempt = accountDAO.getAccountByUserId((String)fieldInput.get(0));
+						if (attempt != null) {
+							if (attempt.getPassword().equals((String)fieldInput.get(1))) {
+								currentSession = attempt;
+							} else {
+								printError("Incorrect password. Please try again!");
+							}
+						}
+					} catch (NotFoundException e) {
+						printError("This user does not exist. Please try again!");
+					}
+					break;
+				case 3:
+					sessionEnd = true;
+					break;
+				default:
+					break;
+				}
+			}
 		}
-		
 		
 		
 		/*********************************************
